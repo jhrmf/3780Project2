@@ -14,10 +14,11 @@ using namespace std;
 int displayMenu(){
 	int choice = -1;
 	cout << "MENU:\n";
-	while(choice != 1 && choice != 2 && choice != 0){
+	while(choice != 1 && choice != 2 && choice != 0 && choice != 3){
 		cout << "0) Terminate\n"
 					"1) Register an Account\n" <<
-					"2) Log in" << endl;
+					"2) Log in\n" <<
+					"3) Change Database" << endl;
 		cin >> choice;
 	}
 	return choice;
@@ -28,6 +29,7 @@ int main() {
 	int choice;
 	string username, password;
 	bool goodInput;
+	string fileName = "DB1";
 	ofstream outfile;
 	outfile.open("DB1", ios::app);
 	ifstream infile;
@@ -82,12 +84,12 @@ int main() {
 			cin >> username;
 			cout << "Input your password " << endl;
 			cin >> password;
-			while(!infile.eof()){
+			while(!infile){
 				getline(infile, line, '\n');
 				checkUName = line.substr(0, line.find(", "));
 				checkPassword = line.substr(line.find(", ")+2,line.length());
 				cout << "username = " << checkUName << " password = " << checkPassword << endl;
-				if(checkUName == username && checkPassword == password){
+				if(!checkUName.compare(username) && !checkPassword.compare(password)){
 					//check password
 					cout << "Sucessfully logged in." << endl;
 					login = true;
@@ -97,6 +99,30 @@ int main() {
 			if(!login){
 				cout << "Could not log in." << endl;
 			}
+		}
+		else if(choice == 3){
+		    outfile.close();
+		    infile.close();
+		    do {
+                cout << "Choose the DB to use:\n1) DB1\n2) DB2\n3) DB3\n";
+		        cin >> choice;
+		    }
+		    while(choice != 1 && choice != 2 && choice != 3);
+		    switch(choice){
+		        case 1:
+		            fileName = "DB1";
+		            break;
+		        case 2:
+		            fileName = "DB2";
+		            break;
+		        case 3:
+		            fileName = "DB3";
+		            break;
+		    }
+		    infile.open(fileName);
+		    outfile.open(fileName, ios::app);
+
+
 		}
 	}
 	outfile.close();
