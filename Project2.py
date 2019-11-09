@@ -8,12 +8,13 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import hashlib, binascii
-
-
+from itertools import product
+import time
+numOfHashes = 1;
 def hash_password_plain(password):
     salt = hashlib.sha256(b"1").hexdigest().encode('ascii')
     pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'),
-                                  salt, 100000)
+                                  salt, numOfHashes)
     pwdhash = binascii.hexlify(pwdhash)
     return (pwdhash).decode('ascii')
 
@@ -25,7 +26,7 @@ def verify_password_plain(stored_password, provided_password):
     pwdhash = hashlib.pbkdf2_hmac('sha512',
                                   provided_password.encode('utf-8'),
                                   salt,
-                                  100000)
+                                  numOfHashes)
     pwdhash = binascii.hexlify(pwdhash).decode('ascii')
     return pwdhash == stored_password
 
@@ -33,7 +34,7 @@ def hash_password_salt(password):
     """Hash a password for storing."""
     salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
     pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'),
-                                  salt, 100000)
+                                  salt, numOfHashes)
     pwdhash = binascii.hexlify(pwdhash)
     return (salt + pwdhash).decode('ascii')
 
@@ -45,7 +46,7 @@ def verify_password_salt(stored_password, provided_password):
     pwdhash = hashlib.pbkdf2_hmac('sha512',
                                   provided_password.encode('utf-8'),
                                   salt.encode('ascii'),
-                                  100000)
+                                  numOfHashes)
     pwdhash = binascii.hexlify(pwdhash).decode('ascii')
     return pwdhash == stored_password
 
@@ -65,7 +66,7 @@ def task2(passBound,numOfAcc):
         for i in range(passBound):
             password += random.choice(string.ascii_lowercase)
 
-        print(password)
+        #print(password)
 
         plain_hash = hash_password_plain(password)
         salt_hash = hash_password_salt(password)
@@ -117,15 +118,62 @@ def verify(password,uname):
             break;
 
 
+def crackPassword(fileNumber,passwordSize):
+    if(fileNumber == 2):
+        infile = open("db2.txt", "r")
+        # flag = False
+        # while(flag):
+        for i in range(passwordSize + 1):
+            for attempt in product('abcdefghijklmnopqrstuvwxyz', repeat=i):
+                #print(''.join(attempt))
+                for line in infile:
+                    list = line.split(", ")
+                    if verify_password_plain(list[1].rstrip(), ''.join(attempt)):
+                        print("Cracked file of type 2: username: " + str(list[0]) + " password: " + ''.join(attempt))
+                        return True
+                infile.seek(0)
 
+
+    else:
+        infile = open("db3.txt", "r")
+        line = infile.readline()
+        list = line.split(", ")
+        flag = False
+        #generator=itertools.combinations_with_replacement('abcdefghijklmnopqrstuvwxyz', passwordSize)
+        for i in range(passwordSize + 1):
+            for attempt in product('abcdefghijklmnopqrstuvwxyz', repeat=i):
+                #print(''.join(attempt))
+                if verify_password_salt(list[1].rstrip(),''.join(attempt)):
+                    print("Cracked file of type 3: username: " + str(list[0]) + " password: " + ''.join(attempt))
+                    return True
 
 #driver:
+
+numOfHashes = 1;
+passwordLength = 5;
+
+
 print("Starting program...")
-task2(3,10);
 
-password = input("What is the password:")
-uname = input("What is the username:")
 
-verify(password,uname)
+#verify(password,uname)
+
+
+for x in range(10):
+    file = open("output.txt", "a")
+    passwordLength = x
+    task2(passwordLength, 10);
+    start_time = time.time()
+    crackPassword(2,passwordLength)
+    print("Time To Crack file 2 for " + str(x) + ": " + str( time.time() - start_time))
+    file.write("Time To Crack file 2 for " + str(x) + ": " + str( time.time() - start_time) + "\n")
+
+    start_time = time.time()
+    crackPassword(3,passwordLength)
+    print("Time To Crack file 3 for " + str(x) + ": " + str( time.time() - start_time))
+    file.write("Time To Crack file 3 for " + str(x) + ": " + str( time.time() - start_time) + "\n")
+    file.close()
+
+
 #input = input("type 'stop' and press enter to end otherwise just press enter to try again")
 
